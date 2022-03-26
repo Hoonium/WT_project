@@ -1,0 +1,11 @@
+<launch>
+    <node pkg= "project_cmd_vel" type= "cmd_vel_controll.py" name="cmd_vel_controll" output="screen">
+        <remap from="/usr/cmd_vel" to="/usr/cmd_vel"/>
+        <remap from="/robot/cmd_vel" to="/cmd_vel" />
+        <remap from="scan_tf" to="base_scan" />
+        <param name="robot_size_X" type="int" value="600" />
+        <param name="robot_size_Y" type="int" value="800" />
+        <param name="safe_zone" type="int" value="200" />
+        <!-- <param from="scan_tf_name" value="base_scan" /> -->
+    </node>
+</launch>

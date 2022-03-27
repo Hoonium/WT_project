@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 
-import rospy, rostopic
-from geometry_msgs.msg import Twist #cmd_vel
-from sensor_msgs.msg import LaserScan #scan
-from tf2_msgs.msg import TFMessage #tf_static
+import rospy
+from geometry_msgs.msg import Twist
+from sensor_msgs.msg import LaserScan
+from tf2_msgs.msg import TFMessage
 import math
-import time
 
 rospy.init_node("cmd_vel_controll")
 robot_size_x = rospy.get_param('~robot_size_X')
@@ -22,16 +21,6 @@ def usr_cmd_CB(data) :
     global usr_cmd_data
     usr_cmd_data = data
 
-# linear: 
-#   x: 0.03
-#   y: 0.0
-#   z: 0.0
-# angular: 
-#   x: 0.0
-#   y: 0.0
-#   z: 0.0
-
-
 def scan_CB(data) :
     global init_scan_hz_flag
     global pre_scan_time
@@ -43,9 +32,6 @@ def scan_CB(data) :
     scan_rate = scan_time - pre_scan_time
     pre_scan_time = scan_time
 
-    _scan_list = [float("inf")] * len(data.ranges)
-    theta_list = {}
-
     for i in range(len(data.ranges)) :
         if data.ranges[i] != float("inf") :
             scan_x = math.cos(math.radians(i)) * data.ranges[i]
@@ -54,30 +40,14 @@ def scan_CB(data) :
             _scan_x = scan_x*math.cos(usr_cmd_data.angular.z*scan_rate) + scan_y*math.sin(usr_cmd_data.angular.z*scan_rate) + (usr_cmd_data.linear.y * scan_rate)
             _scan_y = scan_y*math.cos(usr_cmd_data.angular.z*scan_rate) - scan_x*math.sin(usr_cmd_data.angular.z*scan_rate) + (usr_cmd_data.linear.x * scan_rate)
 
-            # theta_list[str(round(math.degrees(math.atan2(_scan_y,_scan_x))))] = _scan_x / math.cos(math.atan2(_scan_y,_scan_x))
-
-            # _scan_list[i] = _scan_x - scan_x
             if safe_list[int(round(math.degrees(math.atan2(_scan_y,_scan_x))))] >= _scan_x / math.cos(math.atan2(_scan_y,_scan_x)) :
-                print("emergency")
-                # print(math.degrees(math.atan2(_scan_y,_scan_x)))
-                print("t:",int(round(math.degrees(math.atan2(_scan_y,_scan_x)))))
-                print("safe:",safe_list[int(round(math.degrees(math.atan2(_scan_y,_scan_x))))])
-                print("cur:",data.ranges[int(round(math.degrees(math.atan2(_scan_y,_scan_x))))])
-                print("next:",_scan_x / math.cos(math.atan2(_scan_y,_scan_x)))
-                # print(scan_x,scan_y)
-                # print("next:",_scan_x,_scan_y)
                 if _scan_x / math.cos(math.atan2(_scan_y,_scan_x)) >= data.ranges[int(round(math.degrees(math.atan2(_scan_y,_scan_x))))] or data.ranges[int(round(math.degrees(math.atan2(_scan_y,_scan_x))))] == float("inf"):
                     print("continue")
                     continue
                 robot_cmd_pub.publish(Twist())
                 return 0
 
-    # for i in 
-
-    # print(_scan_list)
-    
-    if "safe" :
-        robot_cmd_pub.publish(usr_cmd_data)
+    robot_cmd_pub.publish(usr_cmd_data)
 
 
 def makeSafezone():
@@ -107,8 +77,7 @@ def makeSafezone():
         safe_list[i] =  (front_thd / 1000) / math.sin(math.radians(i))
     for i in range(360+theta4,360): # L
         safe_list[i] =  (left_thd / 1000) / math.cos(math.radians(i))
-    # print('L',safe_list.count('L'),'B',safe_list.count('B'),'R',safe_list.count('R'),'F',safe_list.count('F'))
-    # print("safe_list:", safe_list[theta1],safe_list[theta2],safe_list[theta3],safe_list[theta4],safe_list[0],safe_list[90])
+
     return safe_list
     
 
@@ -121,8 +90,8 @@ if __name__ == '__main__' :
     for i in tf_static.transforms :
         if i.child_frame_id == "base_scan" :
             base_scan_x, base_scan_y = i.transform.translation.x, i.transform.translation.y
-            print(base_scan_x, base_scan_y)
             break
+
     safe_list = makeSafezone()
 
     rospy.spin()

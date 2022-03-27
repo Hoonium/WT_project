@@ -6,6 +6,5 @@
         <param name="robot_size_X" type="int" value="600" />
         <param name="robot_size_Y" type="int" value="800" />
         <param name="safe_zone" type="int" value="200" />
-        <!-- <param from="scan_tf_name" value="base_scan" /> -->
     </node>
 </launch>
